@@ -84,6 +84,7 @@ The server will start on `http://localhost:3000`
 
 ### Posts
 - `GET /posts` - Get all posts (with optional filters: search, tags, isFeatured, status, authorId, pagination)
+- `GET /posts/my-posts` - Get posts by current user (USER/ADMIN role required)
 - `POST /posts` - Create a new post (USER role required)
 - `GET /posts/:postId` - Get post by ID
 
@@ -93,6 +94,7 @@ The server will start on `http://localhost:3000`
 - `POST /comment` - Create a new comment (USER/ADMIN role required)
 - `DELETE /comment/:commentId` - Delete comment (USER/ADMIN role required)
 - `PATCH /comment/:commentId` - Update comment (USER/ADMIN role required)
+- `PATCH /comment/:commentId/moderate` - Moderate comment (ADMIN role required)
 
 ## Database Schema
 
