@@ -51,6 +51,14 @@ A full-featured blog API built with Node.js, Express, TypeScript, and Prisma. Th
    APP_USER="your-email@gmail.com"
    PORT=3000
    ```
+   
+   **Environment Variables Explanation:**
+   - `DATABASE_URL`: PostgreSQL connection string for your database
+   - `APP_URL`: Base URL of your application (used for redirects and links)
+   - `GOOGLE_CLIENT_ID`: Google OAuth client ID from Google Developer Console
+   - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
+   - `APP_USER`: Email address used for sending verification emails
+   - `PORT`: Port number for the server to listen on (default: 3000)
 
 4. **Database Setup**
    

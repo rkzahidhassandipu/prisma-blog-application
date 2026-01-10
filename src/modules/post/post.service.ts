@@ -1,4 +1,9 @@
-import { CommentPost, Post, PostStatus } from "../../../generated/prisma/client";
+import { string } from "better-auth/*";
+import {
+  CommentPost,
+  Post,
+  PostStatus,
+} from "../../../generated/prisma/client";
 import { PostWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 
@@ -97,9 +102,9 @@ const getAllPost = async ({
     },
     include: {
       _count: {
-        select: { comments: true}
-      }
-    }
+        select: { comments: true },
+      },
+    },
   });
   const total = await prisma.post.count({
     where: {
@@ -135,32 +140,140 @@ const getPostById = async (postId: string) => {
       },
       include: {
         comments: {
-          where: { parentId: null, },
+          where: { parentId: null },
           orderBy: { createdAt: "desc" },
           include: {
             replies: {
               // where: {},
-              orderBy:{createdAt: "asc"},
+              orderBy: { createdAt: "asc" },
               include: {
                 replies: {
                   // where:{},
-                  orderBy: {createdAt: "asc"}
+                  orderBy: { createdAt: "asc" },
                 },
-                
               },
             },
           },
         },
         _count: {
-          select: {comments: true}
-        }
+          select: { comments: true },
+        },
       },
     });
     return postData;
   });
 };
+
+const getMyPosts = async (authorId: string) => {
+  await prisma.user.findFirstOrThrow({
+    where: {
+      id: authorId,
+    },
+    select: {
+      id: true,
+    }
+  })
+  const result = await prisma.post.findMany({
+    where: {
+      authorId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      _count: {
+        select: {
+          comments: true,
+        },
+      },
+    },
+  });
+  return result;
+};
+
+
+const updatePost = async (postId: string, data: Partial<Post>, authorId: string, isAdmin: boolean) => {
+  const postData = await prisma.post.findUniqueOrThrow({
+    where: {
+      id: postId,
+    },
+    select: {
+      id: true,
+      authorId: true,
+    }
+  });
+  if (!isAdmin && (postData.authorId !== authorId)) {
+    throw new Error("You are not authorized to update this post");
+  }
+
+  if(!isAdmin){
+    delete data.isFeatured;
+  }
+  const result = await prisma.post.update({
+    where: {
+      id: postId,
+    },
+    data: {
+      ...data,
+    },
+  });
+  return result;
+}
+
+
+const deletePost = async (postId: string, authorId: string, isAdmin: boolean) => {
+  const postData = await prisma.post.findUniqueOrThrow({
+    where: {
+      id: postId,
+    },
+    select: {
+      id: true,
+      authorId: true,
+    }
+  });
+
+  if (!isAdmin && (postData.authorId !== authorId)) {
+    throw new Error("You are not authorized to delete this post");
+  }
+  const result = await prisma.post.delete({
+    where: {
+      id: postId,
+    },
+  });
+  return result;
+};
+
+
+
+const getStats = async () => {
+ return await prisma.$transaction(async (tx) => {
+  const [totalPosts, publishedPosts, draftPosts, archivedPosts, totalComments, approvedComments] = await Promise.all([
+    tx.post.count(),
+    tx.post.count({ where: { status: PostStatus.PUBLISHED } }),
+    tx.post.count({ where: { status: PostStatus.DRAFT } }),
+    tx.post.count({ where: { status: PostStatus.ARCHIVED } }),
+    tx.comment.count(),
+    tx.comment.count({where: {status: "APPROVED"}})
+  ]);
+   return {
+    totalPosts,
+    publishedPosts,
+    draftPosts,
+    archivedPosts,
+    totalComments,
+    approvedComments
+  };
+ });
+};
+ 
+
+
 export const postService = {
   createPost,
   getAllPost,
   getPostById,
+  getMyPosts,
+  updatePost,
+  deletePost,
+  getStats
 };

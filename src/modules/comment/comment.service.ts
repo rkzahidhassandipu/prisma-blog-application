@@ -69,22 +69,25 @@ const deleteComment = async (commentId: string, userId: string) => {
   }
   return await prisma.comment.delete({
     where: {
-      id: commentData.id
-    }
-  })
+      id: commentData.id,
+    },
+  });
 };
 
-
-const updateComment = async (commentId: string, data: {content?: string, status?: CommentPost}, authorId: string) => {
+const updateComment = async (
+  commentId: string,
+  data: { content?: string; status?: CommentPost },
+  authorId: string
+) => {
   const commentData = await prisma.comment.findFirst({
     where: {
       id: commentId,
       authorId,
     },
     select: {
-      id: true
-    }
-  })
+      id: true,
+    },
+  });
 
   if (!commentData) {
     throw new Error("You are not authorized to update this comment");
@@ -92,16 +95,40 @@ const updateComment = async (commentId: string, data: {content?: string, status?
   return await prisma.comment.update({
     where: {
       id: commentId,
-      authorId
+      authorId,
+    },
+    data,
+  });
+};
+
+const moderateComment = async (id: string, data: { status: CommentPost }) => {
+  console.log("moderate Comment", {id, data});
+  const commentData = await prisma.comment.findFirstOrThrow({
+    where: {
+      id
+    },
+    select: {
+      id: true,
+      status: true
+    }
+  })
+
+  if(commentData.status === data.status){
+    throw new Error(`Comment is already ${data.status}`);
+  }
+  return await prisma.comment.update({
+    where: {
+      id
     },
     data
   })
-}
+};
 
 export const CommentService = {
   createComment,
   getCommentsByPostId,
   getCommentsByAuthor,
   deleteComment,
-  updateComment
+  updateComment,
+  moderateComment
 };
