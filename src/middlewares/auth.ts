@@ -22,6 +22,9 @@ const auth =
   async (req: Request, res: Response, next: NextFunction) => {
     try {
         console.log(roles);
+        const authHeader = req.headers.authorization;
+console.log("Authorization header:", authHeader);
+
     const session = await betterAuth.api.getSession({
       headers: req.headers as any,
     });
